@@ -1,0 +1,211 @@
+/* ==========================================
+FEATURED PRODUCTS
+========================================== */
+
+.featured-products-section {
+
+padding: 100px 8%;
+
+transition: 0.35s ease;
+
+}
+
+
+/* ==========================================
+HEADER
+========================================== */
+
+.featured-products-header {
+
+display: flex;
+
+justify-content: space-between;
+
+align-items: flex-end;
+
+margin-bottom: 50px;
+
+}
+
+
+.featured-products-label {
+
+display: block;
+
+color: #c2185b;
+
+font-size: 13px;
+
+font-weight: 800;
+
+letter-spacing: 2px;
+
+margin-bottom: 10px;
+
+}
+
+
+.featured-products-title {
+
+margin: 0 0 12px;
+
+color: #243b8f;
+
+font-size: 42px;
+
+font-weight: 800;
+
+}
+
+
+.featured-products-subtitle {
+
+margin: 0;
+
+color: #666;
+
+font-size: 16px;
+
+line-height: 1.7;
+
+}
+
+
+/* ==========================================
+VIEW ALL
+========================================== */
+
+.featured-products-view-all {
+
+border: none;
+
+background: transparent;
+
+color: #c2185b;
+
+font-size: 16px;
+
+font-weight: 800;
+
+cursor: pointer;
+
+transition: 0.3s ease;
+
+}
+
+
+.featured-products-view-all:hover {
+
+transform: translateX(7px);
+
+}
+
+
+/* ==========================================
+GRID
+========================================== */
+
+.featured-products-grid {
+
+display: grid;
+
+grid-template-columns:
+repeat(4, minmax(0, 1fr));
+
+gap: 30px;
+
+}
+
+
+
+/* ==========================================
+EMPTY
+========================================== */
+
+.featured-products-empty {
+
+padding: 60px 20px;
+
+text-align: center;
+
+color: #888;
+
+}
+
+
+
+
+/* ==========================================
+DARK MODE
+========================================== */
+
+body.dark
+.featured-products-section {
+
+background: #0f172a;
+
+}
+
+
+body.dark
+.featured-products-title {
+
+color: white;
+
+}
+
+
+body.dark
+.featured-products-subtitle {
+
+color: #aaa;
+
+}
+
+body.dark
+.featured-products-empty {
+
+color: #aaa;
+
+}
+
+
+/* ==========================================
+RESPONSIVE
+========================================== */
+
+@media (max-width: 1100px) {
+
+  .featured-products-grid {
+
+grid-template-columns:
+repeat(3, minmax(0, 1fr));
+
+  }
+
+}
+
+
+@media (max-width: 850px) {
+
+  .featured-products-grid {
+
+grid-template-columns:
+repeat(2, minmax(0, 1fr));
+
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .featured-products-grid {
+
+grid-template-columns: 1fr;
+
+  }
+
+}
+
+

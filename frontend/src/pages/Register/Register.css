@@ -1,0 +1,519 @@
+/* =========================
+REGISTER PAGE
+========================= */
+
+.register-container {
+width: 92%;
+max-width: 450px;
+
+margin: 100px auto 60px;
+
+padding: 35px;
+
+background: #ffffff;
+
+border-radius: 24px;
+
+border: 1px solid #e8eaf3;
+
+box-shadow:
+    0 20px 55px rgba(36, 59, 143, 0.10);
+
+display: flex;
+flex-direction: column;
+gap: 18px;
+
+position: relative;
+overflow: hidden;
+
+z-index: 1;
+
+transition:
+background 0.3s ease,
+color 0.3s ease,
+border-color 0.3s ease,
+box-shadow 0.3s ease;
+}
+
+
+/* =========================
+DECORATIVE CIRCLES
+========================= */
+
+.register-container::before {
+content: "";
+
+position: absolute;
+
+width: 280px;
+height: 280px;
+
+border-radius: 50%;
+
+background: #243b8f;
+
+opacity: 0.055;
+
+top: -150px;
+left: -140px;
+
+animation: registerFloat1 9s ease-in-out infinite;
+
+z-index: -1;
+}
+
+
+.register-container::after {
+content: "";
+
+position: absolute;
+
+width: 240px;
+height: 240px;
+
+border-radius: 50%;
+
+background: #c2185b;
+
+opacity: 0.055;
+
+bottom: -130px;
+right: -110px;
+
+animation: registerFloat2 11s ease-in-out infinite;
+
+z-index: -1;
+}
+
+
+@keyframes registerFloat1 {
+
+  0% {
+transform: translate(0, 0);
+  }
+
+  50% {
+transform: translate(25px, 20px);
+  }
+
+  100% {
+transform: translate(0, 0);
+  }
+
+}
+
+
+@keyframes registerFloat2 {
+
+  0% {
+transform: translate(0, 0);
+  }
+
+  50% {
+transform: translate(-20px, -25px);
+  }
+
+  100% {
+transform: translate(0, 0);
+  }
+
+}
+
+
+/* =========================
+TITLE
+========================= */
+
+.register-container h1 {
+text-align: center;
+
+color: #243b8f;
+
+font-size: 34px;
+
+font-weight: 750;
+
+margin: 0 0 8px;
+}
+
+
+/* =========================
+FORM
+========================= */
+
+.register-form {
+display: flex;
+
+flex-direction: column;
+
+gap: 17px;
+
+animation: registerFadeUp 0.7s ease;
+}
+
+
+@keyframes registerFadeUp {
+
+from {
+opacity: 0;
+transform: translateY(20px);
+  }
+
+to {
+opacity: 1;
+transform: translateY(0);
+  }
+
+}
+
+
+/* =========================
+INPUTS
+========================= */
+
+.register-form input {
+width: 100%;
+
+padding: 15px;
+
+border: 2px solid #e1e4ed;
+
+border-radius: 13px;
+
+outline: none;
+
+background: #ffffff;
+
+color: #222;
+
+font-size: 15px;
+
+transition:
+border-color 0.3s ease,
+box-shadow 0.3s ease,
+background-color 0.3s ease;
+}
+
+
+.register-form input::placeholder {
+color: #999;
+}
+
+
+.register-form input:focus {
+border-color: #243b8f;
+
+background: #f7f8ff;
+
+box-shadow:
+    0 0 0 4px rgba(36, 59, 143, 0.09);
+}
+
+
+/* =========================
+PASSWORD
+========================= */
+
+.register-password-box {
+width: 100%;
+
+position: relative;
+
+display: flex;
+
+align-items: center;
+}
+
+
+.register-password-box input {
+padding-right: 65px;
+}
+
+
+.register-show-btn {
+position: absolute;
+
+right: 13px;
+top: 50%;
+
+transform: translateY(-50%);
+
+background: transparent;
+
+border: none;
+
+padding: 0;
+
+color: #243b8f;
+
+font-size: 19px;
+
+display: flex;
+
+align-items: center;
+justify-content: center;
+
+cursor: pointer;
+
+transition:
+color 0.25s ease,
+transform 0.25s ease;
+}
+
+
+.register-show-btn:hover {
+color: #c2185b;
+
+transform:
+translateY(-50%)
+scale(1.1);
+}
+
+
+.register-show-btn:active {
+transform:
+translateY(-50%)
+scale(0.94);
+}
+
+
+/* =========================
+REGISTER BUTTON
+========================= */
+
+.register-form > button[type="submit"] {
+width: 100%;
+
+margin-top: 5px;
+
+padding: 15px;
+
+border: none;
+
+border-radius: 13px;
+
+background: #243b8f;
+
+color: white;
+
+font-size: 17px;
+
+font-weight: 700;
+
+cursor: pointer;
+
+transition:
+transform 0.3s ease,
+box-shadow 0.3s ease,
+background 0.3s ease;
+}
+
+
+.register-form > button[type="submit"]:hover {
+background: #c2185b;
+
+transform: translateY(-4px);
+
+box-shadow:
+    0 12px 28px rgba(194, 24, 91, 0.30);
+}
+
+
+.register-form > button[type="submit"]:active {
+transform: scale(0.96);
+}
+
+
+/* =========================
+LOGIN LINK
+========================= */
+
+.login-link {
+text-align: center;
+
+color: #666;
+
+font-size: 17px;
+
+font-weight: 500;
+
+margin: 4px 0 0;
+}
+
+
+.login-link a {
+margin-left: 7px;
+
+color: #243b8f;
+
+font-size: 19px;
+
+font-weight: 750;
+
+text-decoration: none;
+
+transition:
+color 0.25s ease,
+letter-spacing 0.25s ease;
+}
+
+
+.login-link a:hover {
+color: #c2185b;
+
+letter-spacing: 0.4px;
+}
+
+
+/* =========================
+DARK MODE
+========================= */
+
+body.dark .register-container {
+
+background: #1f2937;
+
+border-color: #374151;
+
+box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.4);
+
+
+}
+
+
+
+body.dark .register-container::before {
+background: #5b7cff;
+
+opacity: 0.09;
+}
+
+
+body.dark .register-container::after {
+background: #ff4f9a;
+
+opacity: 0.09;
+}
+
+
+body.dark .register-container h1 {
+color: #ffffff;
+}
+
+
+body.dark .register-form input {
+background: #111827;
+
+border-color: #374151;
+
+color: #ffffff;
+}
+
+
+body.dark .register-form input::placeholder {
+color: #9ca3af;
+}
+
+
+body.dark .register-form input:focus {
+
+background: #172033;
+
+border-color: #3b82f6;
+
+}
+
+
+
+body.dark .register-show-btn {
+color: #8da2ff;
+}
+
+
+body.dark .register-show-btn:hover {
+color: #ff75b0;
+}
+
+
+body.dark .login-link {
+color: #cccccc;
+}
+
+
+body.dark .login-link a {
+color: #8da2ff;
+}
+
+
+body.dark .login-link a:hover {
+color: #ff75b0;
+}
+
+
+/* =========================
+MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+  .register-container {
+width: 92%;
+
+margin: 40px auto;
+
+padding: 22px;
+
+border-radius: 21px;
+  }
+
+
+  .register-container h1 {
+font-size: 28px;
+
+margin-bottom: 5px;
+  }
+
+
+  .register-form {
+gap: 15px;
+  }
+
+
+  .register-form input {
+padding: 13px;
+
+font-size: 15px;
+  }
+
+
+  .register-password-box input {
+padding-right: 60px;
+  }
+
+
+  .register-show-btn {
+right: 12px;
+
+font-size: 17px;
+  }
+
+
+  .register-form > button[type="submit"] {
+padding: 13px;
+
+font-size: 15px;
+  }
+
+
+  .login-link {
+font-size: 14px;
+  }
+
+
+  .login-link a {
+font-size: 17px;
+  }
+
+}
+

@@ -1,0 +1,252 @@
+.admin-sidebar{
+
+width:240px;
+
+top:82px;
+
+height:calc(100vh - 70px);
+
+background:#1e293b;
+
+position:fixed;
+
+z-index: 1000;
+
+left:0;
+
+padding:30px 20px;
+
+display:flex;
+
+flex-direction:column;
+
+box-shadow:5px 0 20px rgba(0,0,0,.15);
+
+animation:fadeAdmin .6s ease;
+
+border-right:1px solid rgba(255,255,255,.06);
+
+}
+
+
+.logo-admin{
+
+display:flex;
+
+align-items:center;
+
+justify-content:center;
+
+gap:12px;
+
+font-size:30px;
+
+font-weight:800;
+
+color:white;
+
+margin-bottom:45px;
+
+letter-spacing:.5px;
+
+}
+
+
+.logo-admin-icon{
+
+font-size:28px;
+
+color:#c2185b;
+
+}
+
+
+.sidebar-icon{
+
+font-size:20px;
+
+min-width:22px;
+
+}
+
+
+
+.sidebar-link{
+
+cursor: pointer;
+
+display:flex;
+
+align-items:center;
+
+gap:14px;
+
+padding:15px 18px;
+
+border-radius:14px;
+
+font-size:17px;
+
+font-weight:600;
+
+color:#ddd;
+
+transition:.3s;
+
+text-decoration:none;
+
+}
+
+
+
+.sidebar-link:hover{
+
+background:#2d3748;
+
+color:white;		
+
+transform:translateX(6px);
+
+}
+
+
+
+.sidebar-link.active{
+
+color:white;
+
+background:#c2185b;
+
+box-shadow:
+0 10px 25px rgba(194,24,91,.35);
+
+border-radius:16px;
+
+}
+
+
+@keyframes fadeAdmin{
+
+from{
+
+opacity:0;
+
+transform:translateY(20px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+
+
+body.dark .admin-sidebar{
+
+background: #0f1721;
+
+border-right:1px solid #30363d;
+
+}
+
+body.dark .logo-admin{
+
+color:white;
+
+}
+
+body.dark .sidebar-link{
+
+color:#c9d1d9;
+
+}
+
+
+body.dark .sidebar-link:hover{
+
+background:#2d333b;
+
+color:white;
+
+}
+
+
+body.dark .sidebar-link.active{
+
+background: #60a5fa;
+
+color:white;
+
+box-shadow:
+0 10px 25px rgba(19,84,191,.35);
+
+}
+
+
+
+body.dark .logo-admin-icon {
+
+color: #60a5fa; 
+
+}
+
+
+
+@media (max-width:768px){
+
+.admin-sidebar{
+width:70px;
+padding:18px 8px;
+top:110px;
+height:calc(100vh - 70px);
+
+}
+
+.admin-content{
+margin-left:70px;
+padding:12px;
+}
+
+
+.logo-admin{
+
+font-size:0;
+
+margin-bottom:35px;
+
+}
+
+.logo-admin-icon{
+
+font-size:28px;
+
+margin:0;
+
+}
+
+
+.sidebar-link{
+
+justify-content:center;
+padding:12px 0;
+font-size:0;
+
+}
+
+.sidebar-icon{
+
+font-size:20px;
+
+margin:0;
+
+}
+
+}
+
+

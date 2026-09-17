@@ -1,0 +1,708 @@
+/* =========================
+ABOUT PAGE
+========================= */
+
+.about-page {
+min-height: 100vh;
+padding-bottom: 80px;
+}
+
+
+/* =========================
+HERO
+========================= */
+
+.about-hero {
+min-height: 520px;
+padding: 140px 10% 80px;
+
+display: flex;
+justify-content: space-between;
+align-items: center;
+
+gap: 60px;
+}
+
+
+.about-hero >div:first-child {
+max-width: 650px;
+}
+
+
+.about-hero span,
+.about-story span {
+color: #c2185b;
+
+font-size: 13px;
+font-weight: 800;
+
+letter-spacing: 3px;
+}
+
+
+/* =========================
+HERO TITLE
+========================= */
+
+.about-hero h1 {
+font-size: 4rem;
+line-height: 1.05;
+
+color: #243b8f;
+
+margin: 20px 0;
+}
+
+
+.about-hero h1 strong {
+color: #c2185b;
+}
+
+
+.about-hero p {
+color: #666;
+
+font-size: 19px;
+line-height: 1.8;
+
+max-width: 600px;
+}
+
+
+/* =========================
+HEART VISUAL
+========================= */
+
+.about-visual {
+width: 260px;
+height: 260px;
+
+flex-shrink: 0;
+
+border-radius: 70px;
+
+background:
+linear-gradient(
+      135deg,
+      #243b8f,
+      #c2185b
+    );
+
+color: white;
+
+display: flex;
+align-items: center;
+justify-content: center;
+
+font-size: 100px;
+
+box-shadow:
+    0 30px 70px
+rgba(36, 59, 143, 0.25);
+
+transform: rotate(5deg);
+
+position: relative;
+overflow: hidden;
+}
+
+
+/* decorative circles */
+
+.about-visual::before {
+content: "";
+
+position: absolute;
+
+width: 180px;
+height: 180px;
+
+border-radius: 50%;
+
+background: rgba(255,255,255,0.12);
+
+top: -80px;
+left: -80px;
+}
+
+
+.about-visual::after {
+content: "";
+
+position: absolute;
+
+width: 150px;
+height: 150px;
+
+border-radius: 50%;
+
+background: rgba(255,255,255,0.10);
+
+bottom: -70px;
+right: -60px;
+}
+
+
+.about-visual svg {
+position: relative;
+z-index: 2;
+}
+
+
+/* =========================
+OUR STORY
+========================= */
+
+.about-story {
+max-width: 850px;
+
+margin: 20px auto 70px;
+
+padding: 50px;
+
+background: #ffffff;
+
+border-radius: 30px;
+
+text-align: center;
+
+box-shadow:
+    0 10px 30px rgba(15,23,42,0.08),
+    0 2px 8px rgba(15,23,42,0.04);
+
+position: relative;
+
+overflow: hidden;
+}
+
+
+/* same decorative feeling as login */
+
+.about-story::before {
+content: "";
+
+position: absolute;
+
+width: 280px;
+height: 280px;
+
+border-radius: 50%;
+
+background: #2563eb;
+
+opacity: 0.07;
+
+top: -130px;
+left: -130px;
+
+animation: aboutFloat1 9s ease-in-out infinite;
+}
+
+
+.about-story::after {
+content: "";
+
+position: absolute;
+
+width: 230px;
+height: 230px;
+
+border-radius: 50%;
+
+background: #7c3aed;
+
+opacity: 0.06;
+
+bottom: -110px;
+right: -100px;
+
+animation: aboutFloat2 11s ease-in-out infinite;
+}
+
+
+@keyframes aboutFloat1 {
+  0% {
+transform: translate(0, 0);
+  }
+
+  50% {
+transform: translate(25px, 20px);
+  }
+
+  100% {
+transform: translate(0, 0);
+  }
+}
+
+
+@keyframes aboutFloat2 {
+  0% {
+transform: translate(0, 0);
+  }
+
+  50% {
+transform: translate(-20px, -25px);
+  }
+
+  100% {
+transform: translate(0, 0);
+  }
+}
+
+
+.about-story> * {
+position: relative;
+z-index: 2;
+}
+
+
+.about-story h2 {
+color: #243b8f;
+
+font-size: 2.4rem;
+
+margin: 15px 0;
+}
+
+
+.about-story p {
+color: #666;
+
+font-size: 17px;
+
+line-height: 1.9;
+}
+
+
+/* =========================
+FEATURES
+========================= */
+
+.about-features {
+max-width: 1100px;
+
+margin: auto;
+
+display: grid;
+
+grid-template-columns:
+repeat(3, 1fr);
+
+gap: 25px;
+
+padding: 0 20px;
+}
+
+
+.about-feature {
+background: #ffffff;
+
+border-radius: 25px;
+
+padding: 35px 25px;
+
+text-align: center;
+
+transition:
+transform 0.3s ease,
+box-shadow 0.3s ease;
+
+position: relative;
+
+overflow: hidden;
+
+box-shadow:
+    0 10px 30px
+rgba(15,23,42,0.06);
+}
+
+
+/* decorative background */
+
+.about-feature::before {
+content: "";
+
+position: absolute;
+
+width: 130px;
+height: 130px;
+
+border-radius: 50%;
+
+background: #2563eb;
+
+opacity: 0.05;
+
+top: -65px;
+left: -65px;
+
+transition: 0.4s;
+}
+
+
+.about-feature::after {
+content: "";
+
+position: absolute;
+
+width: 110px;
+height: 110px;
+
+border-radius: 50%;
+
+background: #c2185b;
+
+opacity: 0.04;
+
+bottom: -55px;
+right: -55px;
+
+transition: 0.4s;
+}
+
+
+.about-feature> * {
+position: relative;
+z-index: 2;
+}
+
+
+.about-feature:hover {
+transform: translateY(-8px);
+
+box-shadow:
+    0 20px 45px
+rgba(15,23,42,0.12);
+}
+
+
+.about-feature:hover::before {
+transform: translate(20px, 20px);
+}
+
+
+.about-feature:hover::after {
+transform: translate(-15px, -15px);
+}
+
+
+.about-feature svg {
+font-size: 42px;
+
+color: #243b8f;
+}
+
+
+.about-feature h3 {
+color: #333;
+
+margin: 18px 0 10px;
+
+font-size: 20px;
+}
+
+
+.about-feature p {
+color: #777;
+
+line-height: 1.6;
+
+font-size: 15px;
+}
+
+
+/* =========================
+DARK MODE
+========================= */
+
+body.dark .about-page {
+background: #0f1721;
+}
+
+
+body.dark .about-story,
+body.dark .about-feature {
+background: #1f2937;
+
+box-shadow:
+    0 15px 40px
+rgba(0,0,0,0.35);
+}
+
+
+body.dark .about-hero h1,
+body.dark .about-story h2 {
+color: white;
+}
+
+
+body.dark .about-hero p,
+body.dark .about-story p,
+body.dark .about-feature p {
+color: #aaa;
+}
+
+
+body.dark .about-feature h3 {
+color: white;
+}
+
+
+body.dark .about-feature svg {
+color: #8ea2ff;
+}
+
+
+body.dark .about-story::before {
+opacity: 0.12;
+}
+
+
+body.dark .about-story::after {
+opacity: 0.10;
+}
+
+
+body.dark .about-feature::before {
+opacity: 0.10;
+}
+
+
+body.dark .about-feature::after {
+opacity: 0.08;
+}
+
+
+/* =========================
+TABLET
+========================= */
+
+@media (max-width: 900px) {
+
+  .about-hero {
+padding: 120px 7% 70px;
+
+gap: 40px;
+  }
+
+
+  .about-hero h1 {
+font-size: 3.2rem;
+  }
+
+
+  .about-hero p {
+font-size: 17px;
+  }
+
+
+  .about-visual {
+width: 220px;
+height: 220px;
+
+border-radius: 55px;
+
+font-size: 80px;
+  }
+
+
+  .about-features {
+grid-template-columns: repeat(2, 1fr);
+  }
+
+}
+
+
+/* =========================
+MOBILE
+========================= */
+
+@media (max-width: 600px) {
+
+  .about-page {
+padding-bottom: 55px;
+  }
+
+
+  /* heart FIRST */
+
+  .about-hero {
+min-height: auto;
+
+padding: 105px 20px 50px;
+
+display: flex;
+
+flex-direction: column-reverse;
+
+justify-content: center;
+
+gap: 35px;
+
+text-align: center;
+  }
+
+
+  .about-hero >div:first-child {
+max-width: 100%;
+  }
+
+
+  .about-hero span,
+  .about-story span {
+font-size: 11px;
+
+letter-spacing: 2px;
+  }
+
+
+  .about-hero h1 {
+font-size: 2.45rem;
+
+line-height: 1.12;
+
+margin: 14px 0;
+  }
+
+
+  .about-hero p {
+font-size: 15px;
+
+line-height: 1.7;
+
+margin: 0 auto;
+
+max-width: 340px;
+  }
+
+
+  .about-visual {
+width: 165px;
+height: 165px;
+
+border-radius: 42px;
+
+font-size: 62px;
+
+transform: rotate(4deg);
+
+box-shadow:
+      0 20px 45px
+rgba(36,59,143,0.22);
+  }
+
+
+  .about-story {
+margin: 15px 18px 45px;
+
+padding: 30px 20px;
+
+border-radius: 22px;
+  }
+
+
+  .about-story h2 {
+font-size: 1.7rem;
+
+line-height: 1.25;
+
+margin: 12px 0;
+  }
+
+
+  .about-story p {
+font-size: 14px;
+
+line-height: 1.75;
+  }
+
+
+  .about-features {
+grid-template-columns: 1fr;
+
+gap: 16px;
+
+padding: 0 18px;
+  }
+
+
+  .about-feature {
+padding: 27px 20px;
+
+border-radius: 20px;
+  }
+
+
+  .about-feature svg {
+font-size: 35px;
+  }
+
+
+  .about-feature h3 {
+font-size: 18px;
+
+margin: 13px 0 8px;
+  }
+
+
+  .about-feature p {
+font-size: 13px;
+
+line-height: 1.6;
+
+margin: 0;
+  }
+
+}
+
+
+/* =========================
+VERY SMALL PHONES
+========================= */
+
+@media (max-width: 400px) {
+
+  .about-hero {
+padding-left: 15px;
+padding-right: 15px;
+
+gap: 28px;
+  }
+
+
+  .about-hero h1 {
+font-size: 2.15rem;
+  }
+
+
+  .about-hero p {
+font-size: 14px;
+  }
+
+
+  .about-visual {
+width: 145px;
+height: 145px;
+
+font-size: 54px;
+  }
+
+
+  .about-story {
+margin-left: 14px;
+margin-right: 14px;
+
+padding: 25px 17px;
+  }
+
+
+  .about-story h2 {
+font-size: 1.5rem;
+  }
+
+
+  .about-story p {
+font-size: 13px;
+  }
+
+}
