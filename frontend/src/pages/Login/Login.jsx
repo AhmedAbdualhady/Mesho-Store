@@ -7,6 +7,10 @@ import { motion } from "framer-motion";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 
+const API_URL =
+import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+
 function Login() {
 
 const navigate = useNavigate();
@@ -45,7 +49,7 @@ return;
     }
     
     
-fetch("http://localhost:5000/api/login", {
+fetch(`${API_URL}/api/login`, {
 
   method: "POST",
 headers: {

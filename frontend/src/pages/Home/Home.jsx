@@ -14,10 +14,8 @@ import FeaturedCategories from "./FeaturedCategories";
 import FeaturedProducts from "../../components/FeaturedProducts/FeaturedProducts";
 
 
-
 const API_URL =
-  "http://localhost:5000";
-
+import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 
 function Home({ setFlyItem }) {
@@ -112,7 +110,8 @@ const heroImage =
 heroProduct?.image
       ? heroProduct.image.startsWith("http")
         ? heroProduct.image
-        : `http://localhost:5000/uploads/${heroProduct.image}`
+        : `${API_URL}/uploads/${heroProduct.image}`
+
       : "/placeholder.png";
 
 

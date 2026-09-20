@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+const API_URL =
+import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 
 function Register() {
@@ -35,7 +37,9 @@ if (password !== confirmPassword) {
 alert("Passwords do not match");
 return;
 }
-  fetch("http://localhost:5000/api/register", {
+  
+fetch(`${API_URL}/api/register`, {
+
 method: "POST",
 headers: {
     "Content-Type": "application/json",

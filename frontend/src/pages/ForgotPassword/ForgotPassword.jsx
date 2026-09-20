@@ -6,6 +6,10 @@ import { motion } from "framer-motion";
 import { FaCheckCircle } from "react-icons/fa";
 
 
+const API_URL =
+import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+
 
 
 function ForgotPassword() {
@@ -41,7 +45,7 @@ return;
 try {
 
 const res = await fetch(
-"http://localhost:5000/api/forgot-password",
+`${API_URL}/api/forgot-password`,
 
 {
 method:"POST",
@@ -97,7 +101,7 @@ return;
 try {
 
 const res = await fetch(
-"http://localhost:5000/api/reset-password",
+`${API_URL}/api/reset-password`,
 {
 method:"POST",
 headers:{
