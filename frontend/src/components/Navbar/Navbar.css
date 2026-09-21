@@ -744,7 +744,7 @@ color: #f1f5f9;
 MOBILE NAVBAR - 2 ROWS
 ========================= */
 
-@media (max-width: 768px) {
+@media (max-width: 600px) {
 
   .navbar {
 height: auto;
@@ -851,7 +851,7 @@ padding: 0 7px !important;
 
 border-radius: 9px !important;
 
-font-size: 12px !important;
+font-size: 9px !important;
 
 gap: 3px;
 
@@ -876,7 +876,7 @@ padding: 0 7px !important;
 
 border-radius: 9px !important;
 
-font-size: 12px !important;
+font-size: 9px !important;
 
 gap: 3px;
 
@@ -902,7 +902,7 @@ padding: 0 8px !important;
 
 border-radius: 9px !important;
 
-font-size: 12px !important;
+font-size: 9px !important;
 
 gap: 3px;
 
@@ -958,7 +958,7 @@ height: 29px;
 
 padding: 0;
 
-font-size: 15px;
+font-size: 13px;
 
 border-radius: 50%;
 
@@ -985,7 +985,7 @@ margin: 0;
 align-items: center;
 justify-content: center;
 
-font-size: 24px;
+font-size: 22px;
 
 z-index: 1001;
   }
