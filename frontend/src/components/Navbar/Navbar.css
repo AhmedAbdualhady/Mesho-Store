@@ -744,7 +744,7 @@ color: #f1f5f9;
 MOBILE NAVBAR - 2 ROWS
 ========================= */
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
 
   .navbar {
 height: auto;
