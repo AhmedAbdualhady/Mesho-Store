@@ -1448,7 +1448,7 @@ line-clamp: 2;
 
   -webkit-box-orient: vertical;
 
-overflow: auto;
+overflow: hidden;
 
 min-height: 57px;
 
