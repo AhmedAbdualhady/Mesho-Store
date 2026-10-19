@@ -1,5 +1,7 @@
 import { StrictMode } from "react";
 
+import "./styles/theme.css";
+
 import { createRoot } from "react-dom/client";
 
 import { Toaster } from "react-hot-toast";

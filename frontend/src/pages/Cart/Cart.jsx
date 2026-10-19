@@ -1,843 +1,246 @@
 import "./Cart.css";
 
-import { useCart } from "../../context/CartContext";
-
-import { useNavigate } from "react-router-dom";
-
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { FaMinus, FaPlus, FaShoppingBag, FaTrashAlt } from "react-icons/fa";
+import toast from "react-hot-toast";
 
-import {
-FaTrashAlt,
-FaShoppingBag,
-FaMinus,
-FaPlus,
-} from "react-icons/fa";
-
-
-
-// =====================================================
-// API
-// =====================================================
-
-const API_URL =
-import.meta.env.VITE_API_URL || "http://localhost:5000";
-
-
-
-// =====================================================
-// COMPONENT
-// =====================================================
+import { useCart } from "../../context/CartContext";
+import { formatPrice, getImageUrl } from "../../utils/products";
 
 function Cart({ setFlyItem }) {
-
 const navigate = useNavigate();
-
 const {
 cartItems,
-setCartItems,
+increaseItem,
+decreaseItem,
+removeItem,
+getProductQuantity,
   } = useCart();
 
+const subtotal = cartItems.reduce(
+    (sum, item) =>
+sum + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0
+  );
 
-  // ===================================================
-  // IMAGE URL
-  // ===================================================
+const handleIncrease = (item, event) => {
+const image = event.currentTarget
+      .closest(".cart-card")
+      ?.querySelector(".cart-image-wrapper img");
+const rect = image?.getBoundingClientRect();
 
-const getImageUrl = (product) => {
+const result = increaseItem(item.cartKey);
 
-if (!product?.image) {
-return "";
+if (!result.ok) {
+if (result.message) toast.error(result.message);
+return;
     }
 
-
-    // لوالصورةURLكامل
-if (
-product.image.startsWith("http")
-    ) {
-return product.image;
+if (rect && setFlyItem) {
+setFlyItem({ image: getImageUrl(item), rect });
     }
-
-
-    // لواسمالصورةفقط
-return `${API_URL}/uploads/${product.image}`;
-
   };
-
-
-  // ===================================================
-  // INCREASE
-  // ===================================================
-
-
-
-// ===================================================
-// INCREASE
-// ===================================================
-
-const increase = (id, event) => {
-
-  // =========================================
-  // FIND PRODUCT
-  // =========================================
-
-const product =
-cartItems.find(
-      (item) =>
-Number(item.id) === Number(id)
-    );
-
-
-if (!product) {
-return;
-  }
-
-
-  // =========================================
-  // STOCK CHECK
-  // =========================================
-
-const currentQuantity =
-Number(product.quantity) || 1;
-
-const availableStock =
-Number(product.stock) || 0;
-
-
-if (
-currentQuantity>=
-availableStock
-  ) {
-
-return;
-  }
-
-
-  // =========================================
-  // FLY TO CART
-  // =========================================
-
-const button =
-event.currentTarget;
-
-
-const card =
-button.closest(
-      ".cart-card"
-    );
-
-
-const productImage =
-card?.querySelector(
-      ".cart-image-wrapper img"
-    );
-
-
-if (productImage) {
-
-const rect =
-productImage.getBoundingClientRect();
-
-
-setFlyItem({
-image: getImageUrl(product),
-rect,
-    });
-
-  }
-
-
-  // =========================================
-  // UPDATE QUANTITY
-  // =========================================
-
-setCartItems((prev) => {
-
-return prev.map((item) => {
-
-if (
-Number(item.id) !==
-Number(id)
-      ) {
-
-return item;
-
-      }
-
-
-const quantity =
-Number(item.quantity) || 1;
-
-
-return {
-
-        ...item,
-
-quantity:
-quantity + 1,
-
-      };
-
-    });
-
-  });
-
-};
-
-
-
-  // ===================================================
-  // DECREASE
-  // ===================================================
-
-const decrease = (id) => {
-
-setCartItems((prev) => {
-
-return prev.map((item) => {
-
-if (item.id !== id) {
-return item;
-        }
-
-
-const currentQuantity =
-Number(item.quantity) || 1;
-
-
-return {
-
-          ...item,
-
-quantity:
-Math.max(
-              1,
-currentQuantity - 1
-            ),
-
-        };
-
-      });
-
-    });
-
-  };
-
-
-  // ===================================================
-  // REMOVE
-  // ===================================================
-
-const removeItem = (id) => {
-
-setCartItems((prev) =>
-prev.filter(
-        (item) =>
-item.id !== id
-      )
-    );
-
-  };
-
-
-  // ===================================================
-  // SUBTOTAL
-  // ===================================================
-
-const subtotal =
-cartItems.reduce(
-      (sum, item) => {
-
-const price =
-Number(item.price) || 0;
-
-const quantity =
-Number(item.quantity) || 0;
-
 
 return (
-sum +
-price * quantity
-        );
-
-      },
-      0
-    );
-
-
-  // ===================================================
-  // SHIPPING
-  // ===================================================
-
-  
-const shipping = 0;
-
-
-
-  // ===================================================
-  // TOTAL
-  // ===================================================
-
-const total =
-subtotal + shipping;
-
-
-  // ===================================================
-  // RENDER
-  // ===================================================
-
-return (
-
-<>
-
-
-<motion.main 
-
+<motion.main
 className="cart-page"
-
-initial={{
-opacity:0,
-x:60
-}}
-
-animate={{
-opacity:1,
-x:0
-}}
-
-exit={{
-opacity:0,
-x:-60
-}}
-
-transition={{
-duration:.45
-}}
+initial={{ opacity: 0, x: 60 }}
+animate={{ opacity: 1, x: 0 }}
+exit={{ opacity: 0, x: -60 }}
+transition={{ duration: 0.45 }}
 >
-
-
-
-        {/* =================================================
-EMPTY CART
-        ================================================= */}
-
-        {cartItems.length === 0 ? (
-
+      {cartItems.length === 0 ? (
 <motion.div
-
 className="empty-cart"
-
-initial={{
-opacity: 0,
-y: 40,
-            }}
-
-animate={{
-opacity: 1,
-y: 0,
-            }}
-
-transition={{
-duration: 0.5,
-            }}
-
+initial={{ opacity: 0, y: 40 }}
+animate={{ opacity: 1, y: 0 }}
+transition={{ duration: 0.5 }}
 >
-
-<div className="empty-icon">
-🛒
-</div>
-
-
-
-<motion.h2
-initial={{
-opacity: 0,
-y: 25,
-  }}
-animate={{
-opacity: 1,
-y: 0,
-  }}
-transition={{
-delay: 0.15,
-duration: 0.5,
-ease: "easeOut",
-  }}
->
-Your Cart Is Empty
-</motion.h2>
-
-
-<p>
-Looks like you haven't
-added anything yet.
-</p>
-
-
+<div className="empty-icon">🛒</div>
+<h2>Your cart is empty</h2>
+<p>Looks like you haven't added anything yet.</p>
 <button
-
+type="button"
 className="continue-btn"
-
-onClick={() =>
-navigate("/products")
-              }
-
+onClick={() => navigate("/products")}
 >
-
-Continue Shopping
-
+Continue shopping
 </button>
-
 </motion.div>
-
-        ) : (
-
+      ) : (
 <>
-
-            {/* =================================================
-TITLE
-            ================================================= */}
-
 <motion.h1
-
 className="cart-title"
-
 initial={{ opacity: 0, x: -40 }}
 animate={{ opacity: 1, x: 0 }}
-transition={{
-delay: .2,
-duration: .5
-}}
+transition={{ delay: 0.2, duration: 0.5 }}
 >
-
-Shopping Cart
-
+Shopping cart
 </motion.h1>
 
-
 <div className="cart-layout">
-
-
-              {/* =================================================
-PRODUCTS
-              ================================================= */}
-
 <div className="cart-products">
-
 <AnimatePresence>
-
-                  {cartItems.map(
-                    (product) => {
-
-const quantity =
-Number(
-product.quantity
-                        ) || 1;
-
-const stock =
-Number(product.stock) || 0;
-
-const price =
-Number(product.price) || 0;
-
-// المتبقيالحقيقيفيالمخزونبعدالكميةالموجودةفيالسلة
-
-
-const availableStock =
-Math.max(0, stock - quantity);
-
-const isMaxStock =
-quantity >= stock;
-
-const isOutOfStock =
-availableStock<= 0;
-
-
+                {cartItems.map((item) => {
+const quantity = Number(item.quantity) || 1;
+const stock = Number(item.stock) || 0;
+const price = Number(item.price) || 0;
+const inCart = getProductQuantity(item.id);
+const remaining = Math.max(0, stock - inCart);
+const soldOut = stock <= 0;
+const atMax = !soldOut && remaining <= 0;
 
 return (
-
 <motion.div
-
 layout
-
-key={
-product.id
-                          }
-
-className={
-isOutOfStock
-                              ? "cart-card cart-card-out"
-                              : "cart-card"
-                          }
-
-initial={{
-opacity: 0,
-x: 50,
-                          }}
-
-animate={{
-opacity: 1,
-x: 0,
-                          }}
-
-exit={{
-opacity: 0,
-x: -50,
-                          }}
-
-transition={{
-duration: 0.35,
-                          }}
-
+key={item.cartKey}
+className={soldOut ? "cart-card cart-card-out" : "cart-card"}
+initial={{ opacity: 0, x: 50 }}
+animate={{ opacity: 1, x: 0 }}
+exit={{ opacity: 0, x: -50 }}
+transition={{ duration: 0.35 }}
 >
-
-
-                          {/* =================================================
-IMAGE
-                          ================================================= */}
-
 <div className="cart-image-wrapper">
-
 <img
-
-src={
-getImageUrl(
-product
-                                )
-                              }
-
-alt={
-product.name
-                              }
-
-onError={(e) => {
-
-e.currentTarget.style.display =
-                                  "none";
-
-                              }}
-
-                            />
-
-
-                            {isOutOfStock&& (
-
-<span className="cart-out-badge">
-
-OUT OF STOCK
-
-</span>
-
-                            )}
-
+src={getImageUrl(item)}
+alt={item.name}
+onError={(event) => {
+event.currentTarget.style.display = "none";
+                          }}
+                        />
+                        {soldOut&& (
+<span className="cart-out-badge">OUT OF STOCK</span>
+                        )}
 </div>
-
-
-                          {/* =================================================
-INFO
-                          ================================================= */}
 
 <div className="cart-info">
+<h3>{item.name}</h3>
+<p className="category">{item.category || "Product"}</p>
 
-<h3>
-                              {product.name}
-</h3>
-
-
-<p className="category">
-
-                              {product.category ||
-                                "Product"}
-
-</p>
-
-
-<div className="price">
-
-                              $
-                              {price.toFixed(2)}
-
+                        {(item.color || item.size) && (
+<div className="cart-variants">
+                            {item.color&& (
+<span className="cart-variant">{item.color}</span>
+                            )}
+                            {item.size&& (
+<span className="cart-variant">{item.size}</span>
+                            )}
 </div>
+                        )}
 
-<div
-className={
-isOutOfStock
-      ? "cart-stock out"
-      : "cart-stock"
-  }
->
+<div className="price">{formatPrice(price)}</div>
 
+<div className={soldOut ? "cart-stock out" : "cart-stock"}>
 <span />
-
-  {isOutOfStock
-    ? "Out of Stock"
-    : `${availableStock} available`
-  }
-
+                          {soldOut
+                            ? "Out of stock"
+                            : atMax
+                            ? "No more units available"
+                            : `${remaining} more available`}
 </div>
-
 </div>
-
-
-                          {/* =================================================
-QUANTITY
-                          ================================================= */}
 
 <div className="quantity-section">
-
-<span className="quantity-label">
-Quantity
-</span>
-
+<span className="quantity-label">Quantity</span>
 
 <div className="quantity-box">
-
-
-                              {/* MINUS */}
-
 <button
-
+type="button"
 className="quantity-btn"
-
-onClick={() =>
-decrease(
-product.id
-                                  )
-                                }
-
-disabled={
-quantity <= 1
-                                }
-
 aria-label="Decrease quantity"
-
+disabled={quantity <= 1}
+onClick={() => decreaseItem(item.cartKey)}
 >
-
 <FaMinus />
-
 </button>
 
-
-                              {/* NUMBER */}
-
-<span className="quantity-number">
-
-                                {quantity}
-
-</span>
-
-
-                              {/* PLUS */}
+<span className="quantity-number">{quantity}</span>
 
 <button
-
+type="button"
 className="quantity-btn plus"
-
-onClick={(event) =>
-increase(
-product.id,
-event
-  )
-}
-
-disabled={
-isOutOfStock ||
-isMaxStock
-                                }
-
 aria-label="Increase quantity"
-
+disabled={soldOut || atMax}
+onClick={(event) => handleIncrease(item, event)}
 >
-
 <FaPlus />
-
 </button>
-
 </div>
 
-
-                            {isMaxStock&&
-                              !isOutOfStock&& (
-
+                        {atMax&& (
 <small className="max-stock-text">
-
 Maximum available
-
 </small>
-
-                            )}
-
+                        )}
 </div>
-
-
-                          {/* =================================================
-ITEM TOTAL
-                          ================================================= */}
 
 <div className="item-total">
-
-                            $
-                            {(
-price *
-quantity
-                            ).toFixed(2)}
-
+                        {formatPrice(price * quantity)}
 </div>
-
-
-                          {/* =================================================
-REMOVE
-                          ================================================= */}
 
 <button
-
+type="button"
 className="remove-btn"
-
-onClick={() =>
-removeItem(
-product.id
-                              )
-                            }
-
 aria-label="Remove item"
-
+onClick={() => removeItem(item.cartKey)}
 >
-
 <FaTrashAlt />
-
 </button>
-
-
 </motion.div>
-
-                      );
-
-                    }
-                  )}
-
+                  );
+                })}
 </AnimatePresence>
-
 </div>
-
-
-              {/* =================================================
-SUMMARY
-              ================================================= */}
 
 <motion.aside
-
 className="cart-summary"
-
-initial={{
-opacity: 0,
-x: 30,
-                }}
-
-animate={{
-opacity: 1,
-x: 0,
-                }}
-
-transition={{
-duration: 0.5,
-delay: 0.15,
-                }}
-
+initial={{ opacity: 0, x: 30 }}
+animate={{ opacity: 1, x: 0 }}
+transition={{ duration: 0.5, delay: 0.15 }}
 >
-
-<h2>
-Order Summary
-</h2>
-
+<h2>Order summary</h2>
 
 <div className="summary-row">
-
-<span>
-Subtotal
-</span>
-
-<span>
-                    ${subtotal.toFixed(2)}
-</span>
-
+<span>Subtotal</span>
+<span>{formatPrice(subtotal)}</span>
 </div>
-
 
 <div className="summary-row">
-
-<span>
-Shipping
-</span>
-
-<span>
-                    ${shipping.toFixed(2)}
-</span>
-
+<span>Shipping</span>
+<span>Calculated at checkout</span>
 </div>
-
 
 <hr />
 
-
 <div className="summary-total">
-
-<span>
-Total
-</span>
-
-<span>
-                    ${total.toFixed(2)}
-</span>
-
+<span>Total</span>
+<span>{formatPrice(subtotal)}</span>
 </div>
 
-
 <button
-
+type="button"
 className="checkout-btn"
-
-onClick={() =>
-navigate("/checkout")
-                  }
-
+onClick={() => navigate("/checkout")}
 >
-
 <FaShoppingBag />
-
-Proceed To Checkout
-
+Proceed to checkout
 </button>
-
 
 <button
-
+type="button"
 className="continue-shopping"
-
-onClick={() =>
-navigate("/products")
-                  }
-
+onClick={() => navigate("/products")}
 >
-
-Continue Shopping
-
+Continue shopping
 </button>
-
 </motion.aside>
-
 </div>
-
 </>
-
-        )}
-
-
+      )}
 </motion.main>
-
-</>
-
   );
-
 }
-
 
 export default Cart;
 

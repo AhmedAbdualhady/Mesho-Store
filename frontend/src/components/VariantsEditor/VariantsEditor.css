@@ -1,0 +1,107 @@
+.variants-editor {
+grid-column: 1 / -1;
+display: flex;
+flex-direction: column;
+gap: 12px;
+}
+
+.variants-block {
+display: flex;
+flex-direction: column;
+gap: 10px;
+padding: 14px;
+border: 1px solid #dce4f1;
+border-radius: 14px;
+background: #f8faff;
+}
+
+.variants-head {
+display: flex;
+align-items: center;
+justify-content: space-between;
+color: #50627d;
+font-size: 13px;
+font-weight: 800;
+}
+
+.variants-head button {
+display: flex;
+align-items: center;
+gap: 6px;
+padding: 7px 12px;
+border: none;
+border-radius: 9px;
+background: #243b8f;
+color: #fff;
+font-size: 12px;
+font-weight: 700;
+cursor: pointer;
+}
+
+.variants-head button:hover {
+background: #c2185b;
+}
+
+.variants-empty {
+margin: 0;
+color: #8290a7;
+font-size: 12px;
+}
+
+.variants-row {
+display: flex;
+align-items: center;
+gap: 8px;
+}
+
+.modal-content .variants-row input[type="color"] {
+width: 44px;
+height: 44px;
+flex: none;
+padding: 3px;
+cursor: pointer;
+}
+
+.modal-content .variants-row input[type="text"] {
+flex: 1;
+min-width: 0;
+}
+
+.variants-remove {
+width: 40px;
+height: 40px;
+flex: none;
+display: flex;
+align-items: center;
+justify-content: center;
+border: none;
+border-radius: 10px;
+background: #fff0f6;
+color: #c2185b;
+cursor: pointer;
+}
+
+.variants-block small {
+color: #8290a7;
+font-size: 12px;
+font-weight: 500;
+}
+
+body.dark .variants-block {
+border-color: #303847;
+background: #202631;
+}
+
+body.dark .variants-head {
+color: #c5ccd8;
+}
+
+body.dark .variants-empty,
+body.dark .variants-block small {
+color: #727c8e;
+}
+
+body.dark .variants-remove {
+background: #252c3a;
+color: #ff718c;
+}

@@ -1,66 +1,154 @@
 const express = require("express");
-const router = express.Router();
-
 const db = require("../config/db");
 const upload = require("../middleware/upload");
 const auth = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
+const { orderLimiter } = require("../middleware/rateLimiter");
 
-const {
-orderLimiter,
-} = require("../middleware/rateLimiter");
+const router = express.Router();
 
+const DEFAULT_SHIPPING = { pickup: 0, standard: 15, express: 30 };
+const PAYMENT_METHODS = ["bank", "wallet", "cash", "card"];
+const SHIPPING_METHODS = ["pickup", "standard", "express"];
 
-// =====================================================
-// SHIPPING PRICES
-// =====================================================
-
-const SHIPPING_PRICES = {
-pickup: 0,
-standard: 15,
-express: 30,
+const NEXT_STATUSES = {
+pending: ["confirmed", "cancelled"],
+confirmed: ["preparing", "cancelled"],
+preparing: ["ready", "cancelled"],
+ready: ["delivered", "cancelled"],
+delivered: [],
+cancelled: [],
 };
 
+const httpError = (status, message) =>
+Object.assign(new Error(message), { status });
 
-// =====================================================
-// ALLOWED PAYMENT METHODS
-// =====================================================
+const sendError = (res, error, fallback) => {
+if (error.status) {
+return res
+      .status(error.status)
+      .json({ success: false, message: error.message });
+  }
+console.error(fallback, error);
+return res.status(500).json({ success: false, message: fallback });
+};
 
-const ALLOWED_PAYMENT_METHODS = [
-  "bank",
-  "wallet",
-  "cash",
-  "card",
-];
+const toArray = (value) => {
+if (Array.isArray(value)) return value;
+if (typeof value !== "string" || !value.trim()) return [];
+try {
+const parsed = JSON.parse(value);
+return Array.isArray(parsed) ? parsed : [];
+  } catch {
+return [];
+  }
+};
 
+const money = (value) => Math.round(Number(value) * 100) / 100;
 
-// =====================================================
-// ALLOWED SHIPPING METHODS
-// =====================================================
+const getShippingPrices = async (connection) => {
+const [rows] = await connection.query(
+    `SELECT pickup_shipping_price, standard_shipping_price, express_shipping_price
+FROM website_settings WHERE id = 1 LIMIT 1`
+  );
 
-const ALLOWED_SHIPPING_METHODS = [
-  "pickup",
-  "standard",
-  "express",
-];
+if (rows.length === 0) return DEFAULT_SHIPPING;
 
+const read = (value, fallback) => {
+const number = Number(value ?? fallback);
+return Number.isFinite(number) && number >= 0 ? number : fallback;
+  };
 
-// =====================================================
-// ALLOWED ORDER STATUSES
-// =====================================================
+return {
+pickup: read(rows[0].pickup_shipping_price, DEFAULT_SHIPPING.pickup),
+standard: read(rows[0].standard_shipping_price, DEFAULT_SHIPPING.standard),
+express: read(rows[0].express_shipping_price, DEFAULT_SHIPPING.express),
+  };
+};
 
-const ALLOWED_STATUSES = [
-  "pending",
-  "confirmed",
-  "preparing",
-  "ready",
-  "delivered",
-  "cancelled",
-];
+const pickOption = (value, options, label, productName) => {
+if (options.length === 0) return null;
 
-// =====================================================
-// CREATE ORDER
-// POST /api/orders
-// =====================================================
+const wanted = String(value || "").trim().toLowerCase();
+const match = options.find((option) => option.toLowerCase() === wanted);
+
+if (!match) {
+throw httpError(400, `Please choose a ${label} for ${productName}`);
+  }
+
+return match;
+};
+
+const restoreStock = async (connection, orderId) => {
+const [lines] = await connection.query(
+    "SELECT product_id, quantity FROM order_items WHERE order_id = ?",
+    [orderId]
+  );
+
+for (const line of lines) {
+await connection.query(
+      "UPDATE products SET stock = stock + ? WHERE id = ?",
+      [line.quantity, line.product_id]
+    );
+  }
+};
+
+const changeStatus = async (orderId, nextStatus, { userId, isAdmin }) => {
+const connection = await db.getConnection();
+
+try {
+await connection.beginTransaction();
+
+const [rows] = await connection.query(
+      "SELECT id, user_id, status FROM orders WHERE id = ? FOR UPDATE",
+      [orderId]
+    );
+
+if (rows.length === 0) throw httpError(404, "Order not found");
+
+const order = rows[0];
+
+if (!isAdmin) {
+if (Number(order.user_id) !== Number(userId)) {
+throw httpError(403, "You are not allowed to change this order");
+      }
+if (order.status !== "pending" || nextStatus !== "cancelled") {
+throw httpError(400, "Only pending orders can be cancelled");
+      }
+    }
+
+if (!(NEXT_STATUSES[order.status] || []).includes(nextStatus)) {
+throw httpError(
+        400,
+        `An order that is ${order.status} cannot become ${nextStatus}`
+      );
+    }
+
+await connection.query("UPDATE orders SET status = ? WHERE id = ?", [
+nextStatus,
+orderId,
+    ]);
+
+if (nextStatus === "cancelled") {
+await restoreStock(connection, orderId);
+    }
+
+await connection.commit();
+  } catch (error) {
+await connection.rollback();
+throw error;
+  } finally {
+connection.release();
+  }
+};
+
+const parseOrderId = (value) => {
+const orderId = Number(value);
+if (!Number.isInteger(orderId) || orderId <= 0) {
+throw httpError(400, "Invalid order ID");
+  }
+return orderId;
+};
 
 router.post(
   "/",
@@ -68,11 +156,14 @@ auth,
 orderLimiter,
 upload.single("paymentImage"),
 async (req, res) => {
-
-
-const connection = await db.getConnection();
+let connection;
 
 try {
+const userId = Number(req.user?.id);
+
+if (!Number.isInteger(userId) || userId <= 0) {
+throw httpError(401, "Authentication required");
+      }
 
 const {
 customer_name,
@@ -82,31 +173,6 @@ payment_method,
 shipping_method,
 items,
       } = req.body;
-
-
-      // =================================================
-      // AUTHENTICATED USER
-      // =================================================
-
-const userId = Number(req.user?.id);
-
-
-if (
-        !Number.isInteger(userId) ||
-userId <= 0
-      ) {
-
-return res.status(401).json({
-success: false,
-message: "Authentication required",
-        });
-
-      }
-
-
-      // =================================================
-      // REQUIRED FIELDS
-      // =================================================
 
 if (
         !customer_name ||
@@ -116,1289 +182,331 @@ if (
         !shipping_method ||
         !items
       ) {
-
-return res.status(400).json({
-success: false,
-message: "Please fill all required fields",
-        });
-
+throw httpError(400, "Please fill all required fields");
       }
 
+const name = String(customer_name).trim();
+const cleanPhone = String(phone).trim();
+const cleanAddress = String(address).trim();
 
-      // =================================================
-      // CLEAN CUSTOMER DATA
-      // =================================================
-
-const cleanName =
-String(customer_name).trim();
-
-const cleanPhone =
-String(phone).trim();
-
-const cleanAddress =
-String(address).trim();
-
-
-if (
-cleanName.length < 2 ||
-cleanName.length > 100
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid customer name",
-        });
-
+if (name.length < 2 || name.length > 100) {
+throw httpError(400, "Invalid customer name");
+      }
+if (cleanPhone.length < 8 || cleanPhone.length > 30) {
+throw httpError(400, "Invalid phone number");
+      }
+if (cleanAddress.length < 3 || cleanAddress.length > 500) {
+throw httpError(400, "Invalid address");
+      }
+if (!PAYMENT_METHODS.includes(payment_method)) {
+throw httpError(400, "Invalid payment method");
+      }
+if (!SHIPPING_METHODS.includes(shipping_method)) {
+throw httpError(400, "Invalid shipping method");
+      }
+if (["bank", "wallet"].includes(payment_method) && !req.file) {
+throw httpError(
+          400,
+          "Payment proof is required for this payment method"
+        );
       }
 
-
-if (
-cleanPhone.length < 8 ||
-cleanPhone.length > 30
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid phone number",
-        });
-
-      }
-
-
-if (
-cleanAddress.length < 3 ||
-cleanAddress.length > 500
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid address",
-        });
-
-      }
-
-
-      // =================================================
-      // PAYMENT METHOD VALIDATION
-      // =================================================
-
-if (
-        !ALLOWED_PAYMENT_METHODS.includes(
-payment_method
-        )
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid payment method",
-        });
-
-      }
-
-
-      // =================================================
-      // SHIPPING METHOD VALIDATION
-      // =================================================
-
-if (
-        !ALLOWED_SHIPPING_METHODS.includes(
-shipping_method
-        )
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid shipping method",
-        });
-
-      }
-
-
-      // =================================================
-      // PAYMENT PROOF
-      // =================================================
-
-const requiresPaymentProof =
-payment_method === "bank" ||
-payment_method === "wallet";
-
-
-if (
-requiresPaymentProof&&
-        !req.file
-      ) {
-
-return res.status(400).json({
-success: false,
-message:
-            "Payment proof is required for this payment method",
-        });
-
-      }
-
-
-const payment_image =
-req.file
-          ? req.file.filename
-          : null;
-
-
-      // =================================================
-      // PARSE ITEMS
-      // =================================================
-
-let parsedItems;
+let rawItems;
 
 try {
-
-parsedItems =
-typeof items === "string"
-            ? JSON.parse(items)
-            : items;
-
-      } catch (error) {
-
-return res.status(400).json({
-success: false,
-message: "Invalid items data",
-        });
-
+rawItems = typeof items === "string" ? JSON.parse(items) : items;
+      } catch {
+throw httpError(400, "Invalid items data");
       }
 
-
-      // =================================================
-      // CART VALIDATION
-      // =================================================
-
-if (
-        !Array.isArray(parsedItems) ||
-parsedItems.length === 0
-      ) {
-
-return res.status(400).json({
-success: false,
-message: "Cart is empty",
-        });
-
+if (!Array.isArray(rawItems) || rawItems.length === 0) {
+throw httpError(400, "Cart is empty");
+      }
+if (rawItems.length > 100) {
+throw httpError(400, "Too many products in order");
       }
 
+const requested = rawItems
+        .map((item) => ({
+productId: Number(item.product_id ?? item.id),
+quantity: Number(item.quantity),
+color: item.color,
+size: item.size,
+        }))
+        .sort((a, b) => a.productId - b.productId);
 
-if (
-parsedItems.length > 100
-      ) {
+const invalid = requested.some(
+        (item) =>
+          !Number.isInteger(item.productId) ||
+item.productId <= 0 ||
+          !Number.isInteger(item.quantity) ||
+item.quantity <= 0
+      );
 
-return res.status(400).json({
-success: false,
-message: "Too many products in order",
-        });
+if (invalid) throw httpError(400, "Invalid product or quantity");
 
-      }
-
-
-      // =================================================
-      // START TRANSACTION
-      // =================================================
-
+connection = await db.getConnection();
 await connection.beginTransaction();
 
+const [users] = await connection.query(
+        "SELECT id FROM users WHERE id = ?",
+        [userId]
+      );
 
-      // =================================================
-      // VERIFY USER EXISTS
-      // =================================================
+if (users.length === 0) throw httpError(401, "Authentication required");
 
-const [users] =
-await connection.execute(
-          `
-SELECT
-id,
-name,
-email
-FROM users
-WHERE id = ?
-          `,
-          [userId]
-        );
-
-
-if (
-users.length === 0
-      ) {
-
-const error =
-new Error("User account not found");
-
-error.code =
-          "USER_NOT_FOUND";
-
-throw error;
-
-      }
-
-
-      // =================================================
-      // CALCULATE SUBTOTAL
-      // =================================================
+const shippingPrices = await getShippingPrices(connection);
 
 let subtotal = 0;
-
-
-      // =================================================
-      // CHECK PRODUCTS + DECREASE STOCK
-      // =================================================
-
-for (
-const item of parsedItems
-      ) {
-
-const productId =
-Number(
-item.product_id ??
-item.id
-          );
-
-
-const quantity =
-Number(item.quantity);
-
-
-        // ===============================================
-        // ITEM VALIDATION
-        // ===============================================
-
-if (
-          !Number.isInteger(productId) ||
-productId <= 0 ||
-          !Number.isInteger(quantity) ||
-quantity <= 0
-        ) {
-
-const error =
-new Error(
-              "Invalid product or quantity"
-            );
-
-error.code =
-            "INVALID_ITEM";
-
-throw error;
-
-        }
-
-
-        // ===============================================
-        // LOCK PRODUCT
-        // ===============================================
-
-const [products] =
-await connection.execute(
-            `
-SELECT
-id,
-name,
-price,
-stock
-FROM products
-WHERE id = ?
-FOR UPDATE
-            `,
-            [productId]
-          );
-
-
-        // ===============================================
-        // PRODUCT NOT FOUND
-        // ===============================================
-
-if (
-products.length === 0
-        ) {
-
-const error =
-new Error(
-              `Product ${productId} not found`
-            );
-
-error.code =
-            "PRODUCT_NOT_FOUND";
-
-throw error;
-
-        }
-
-
-const product =
-products[0];
-
-
-const stock =
-Number(product.stock) || 0;
-
-
-const realPrice =
-Number(product.price);
-
-
-        // ===============================================
-        // PRICE VALIDATION
-        // ===============================================
-
-if (
-          !Number.isFinite(realPrice) ||
-realPrice < 0
-        ) {
-
-const error =
-new Error(
-              `Invalid price for ${product.name}`
-            );
-
-error.code =
-            "INVALID_PRICE";
-
-throw error;
-
-        }
-
-
-        // ===============================================
-        // STOCK CHECK
-        // ===============================================
-
-if (
-stock < quantity
-        ) {
-
-const error =
-new Error(
-              `${product.name} does not have enough stock`
-            );
-
-error.code =
-            "INSUFFICIENT_STOCK";
-
-throw error;
-
-        }
-
-
-        // ===============================================
-        // SAFE STOCK UPDATE
-        // ===============================================
-
-const [updateResult] =
-await connection.execute(
-            `
-UPDATE products
-
-SET stock = stock - ?
-
-WHERE id = ?
-
-AND stock>= ?
-            `,
-            [
-quantity,
-productId,
-quantity,
-            ]
-          );
-
-
-        // ===============================================
-        // RACE CONDITION PROTECTION
-        // ===============================================
-
-if (
-updateResult.affectedRows !== 1
-        ) {
-
-const error =
-new Error(
-              `${product.name} is out of stock`
-            );
-
-error.code =
-            "INSUFFICIENT_STOCK";
-
-throw error;
-
-        }
-
-
-        // ===============================================
-        // CALCULATE SUBTOTAL
-        // ===============================================
-
-subtotal +=
-realPrice * quantity;
-
-
-// Save real DB data
-// for order
-
-item.name =
-product.name;
-
-item.realPrice =
-realPrice;
-
-      }
-
-
-      // =================================================
-      // SHIPPING
-      // =================================================
-
-const shipping =
-Number(
-SHIPPING_PRICES[
-shipping_method
-          ]
+const savedItems = [];
+
+for (const item of requested) {
+const [products] = await connection.query(
+          `SELECT id, name, price, stock, image, colors, sizes
+FROM products WHERE id = ? FOR UPDATE`,
+          [item.productId]
         );
 
+if (products.length === 0) {
+throw httpError(404, `Product ${item.productId} not found`);
+        }
 
-      // =================================================
-      // FINAL TOTAL
-      // =================================================
+const product = products[0];
+const price = Number(product.price);
 
-const orderTotal =
-subtotal + shipping;
+if (!Number.isFinite(price) || price < 0) {
+throw httpError(500, `Invalid price for ${product.name}`);
+        }
 
+const color = pickOption(
+item.color,
+toArray(product.colors).map((entry) => String(entry?.name || "")),
+          "color",
+product.name
+        );
 
-      // =================================================
-      // CREATE ORDER
-      // =================================================
+const size = pickOption(
+item.size,
+toArray(product.sizes).map(String),
+          "size",
+product.name
+        );
 
-const [orderResult] =
-await connection.execute(
-          `
-INSERT INTO orders
-          (
-user_id,
-customer_name,
-phone,
-address,
-total,
-payment_method,
-payment_image,
-items,
-status,
-shipping_method
-          )
+const [update] = await connection.query(
+          "UPDATE products SET stock = stock - ? WHERE id = ? AND stock>= ?",
+          [item.quantity, item.productId, item.quantity]
+        );
 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-          `,
-          [
+if (update.affectedRows !== 1) {
+throw httpError(409, `${product.name} does not have enough stock`);
+        }
+
+subtotal = money(subtotal + price * item.quantity);
+
+savedItems.push({
+product_id: product.id,
+name: product.name,
+image: product.image,
+price,
+quantity: item.quantity,
+color,
+size,
+        });
+      }
+
+const shipping = shippingPrices[shipping_method];
+const total = money(subtotal + shipping);
+
+const [orderResult] = await connection.query(
+        `INSERT INTO orders
+          (user_id, customer_name, phone, address, total, payment_method,
+payment_image, items, status, shipping_method)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
 userId,
-cleanName,
+name,
 cleanPhone,
 cleanAddress,
-orderTotal,
+total,
 payment_method,
-payment_image,
-JSON.stringify(parsedItems),
-            "pending",
+req.file ? req.file.filename : null,
+JSON.stringify(savedItems),
+          "pending",
 shipping_method,
-          ]
+        ]
+      );
+
+const orderId = orderResult.insertId;
+
+for (const item of savedItems) {
+await connection.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, price)
+VALUES (?, ?, ?, ?)`,
+          [orderId, item.product_id, item.quantity, item.price]
         );
-
-
-const orderId =
-orderResult.insertId;
-
-
-      // =================================================
-      // CREATE ORDER ITEMS
-      // =====================================================
-
-for (
-const item of parsedItems
-      ) {
-
-const productId =
-Number(
-item.product_id ??
-item.id
-          );
-
-
-const quantity =
-Number(item.quantity);
-
-
-const price =
-Number(item.realPrice);
-
-
-await connection.execute(
-          `
-INSERT INTO order_items
-          (
-order_id,
-product_id,
-quantity,
-price
-          )
-
-VALUES (?, ?, ?, ?)
-          `,
-          [
-orderId,
-productId,
-quantity,
-price,
-          ]
-        );
-
       }
-
-
-      // =================================================
-      // COMMIT
-      // =================================================
 
 await connection.commit();
 
-
-      // =================================================
-      // SUCCESS RESPONSE
-      // =================================================
-
-return res.status(201).json({
-
+res.status(201).json({
 success: true,
-
-message:
-          "Order placed successfully",
-
+message: "Order placed successfully",
 orderId,
-
-subtotal:
-Number(
-subtotal.toFixed(2)
-          ),
-
-shipping:
-Number(
-shipping.toFixed(2)
-          ),
-
+subtotal,
+shipping: money(shipping),
 shipping_method,
-
-total:
-Number(
-orderTotal.toFixed(2)
-          ),
-
+total,
       });
-
-
     } catch (error) {
-
-
-      // =================================================
-      // ROLLBACK
-      // =================================================
-
-await connection.rollback();
-
-
-console.error(
-        "Create Order Error:",
-error
-      );
-
-
-      // =================================================
-      // STOCK ERROR
-      // =================================================
-
-if (
-error.code ===
-        "INSUFFICIENT_STOCK"
-      ) {
-
-return res.status(409).json({
-
-success: false,
-
-message:
-error.message,
-
-        });
-
-      }
-
-
-      // =================================================
-      // PRODUCT NOT FOUND
-      // =================================================
-
-if (
-error.code ===
-        "PRODUCT_NOT_FOUND"
-      ) {
-
-return res.status(404).json({
-
-success: false,
-
-message:
-error.message,
-
-        });
-
-      }
-
-
-      // =================================================
-      // INVALID ITEM
-      // =================================================
-
-if (
-error.code ===
-        "INVALID_ITEM"
-      ) {
-
-return res.status(400).json({
-
-success: false,
-
-message:
-error.message,
-
-        });
-
-      }
-
-
-      // =================================================
-      // USER ERROR
-      // =================================================
-
-if (
-error.code ===
-          "USER_NOT_FOUND"
-      ) {
-
-return res.status(401).json({
-
-success: false,
-
-message:
-            "Authentication required",
-
-        });
-
-      }
-
-
-      // =================================================
-      // INVALID PRICE
-      // =================================================
-
-if (
-error.code ===
-          "INVALID_PRICE"
-      ) {
-
-return res.status(500).json({
-
-success: false,
-
-message:
-            "Invalid product price",
-
-        });
-
-      }
-
-
-      // =================================================
-      // OTHER ERROR
-      // =================================================
-
-return res.status(500).json({
-
-success: false,
-
-message:
-          "Failed to create order",
-
-      });
-
+if (connection) await connection.rollback();
+sendError(res, error, "Failed to create order");
     } finally {
-
-connection.release();
-
+if (connection) connection.release();
     }
-
   }
 );
 
-
-// =====================================================
-// GET ALL ORDERS
-// GET /api/orders
-// ADMIN ONLY
-// =====================================================
-
-router.get(
-  "/",
-auth,
-async (req, res) => {
-
+router.get("/", auth, adminMiddleware, async (req, res) => {
 try {
-
-      // -----------------------------------------------
-      // ADMIN CHECK
-      // -----------------------------------------------
-
-if (
-Number(req.user?.is_admin) !== 1
-      ) {
-
-return res.status(403).json({
-
-success: false,
-
-message:
-            "Admin access required",
-
-        });
-
-      }
-
-
-const [orders] =
-await db.execute(
-          `
-SELECT
-o.*,
-u.name AS user_name,
-u.email AS user_email
-
+const [orders] = await db.query(
+      `SELECT o.*, u.name AS user_name, u.email AS user_email
 FROM orders o
+LEFT JOIN users u ON u.id = o.user_id
+ORDER BY o.id DESC`
+    );
 
-LEFT JOIN users u
-ON u.id = o.user_id
-
-ORDER BY o.id DESC
-          `
-        );
-
-
-return res.json(
-orders
-      );
-
-
-    } catch (error) {
-
-console.error(
-        "Get Orders Error:",
-error
-      );
-
-
-return res.status(500).json({
-
-success: false,
-
-message:
-          "Failed to fetch orders",
-
-      });
-
-    }
-
+res.json(orders);
+  } catch (error) {
+sendError(res, error, "Failed to fetch orders");
   }
-);
+});
 
-
-// =====================================================
-// GET ONE ORDER
-// GET /api/orders/:id
-// USER OR ADMIN
-// =====================================================
-
-router.get(
-  "/:id",
-auth,
-async (req, res) => {
-
+router.get("/my", auth, async (req, res) => {
 try {
-
-const orderId =
-Number(req.params.id);
-
-
-if (
-        !Number.isInteger(orderId) ||
-orderId <= 0
-      ) {
-
-return res.status(400).json({
-
-success: false,
-
-message:
-            "Invalid order ID",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // GET ORDER
-      // -----------------------------------------------
-
-const [orders] =
-await db.execute(
-          `
-SELECT *
-FROM orders
-WHERE id = ?
-          `,
-          [orderId]
-        );
-
-
-if (
-orders.length === 0
-      ) {
-
-return res.status(404).json({
-
-success: false,
-
-message:
-            "Order not found",
-
-        });
-
-      }
-
-
-const order =
-orders[0];
-
-
-      // -----------------------------------------------
-      // OWNER / ADMIN PROTECTION
-      // -----------------------------------------------
-
-const isAdmin =
-Number(req.user?.is_admin) === 1;
-
-const isOwner =
-Number(order.user_id) ===
-Number(req.user?.id);
-
-
-if (
-        !isAdmin&&
-        !isOwner
-      ) {
-
-return res.status(403).json({
-
-success: false,
-
-message:
-            "You are not allowed to view this order",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // ORDER ITEMS
-      // -----------------------------------------------
-
-const [items] =
-await db.execute(
-          `
-SELECT
-oi.id,
-oi.product_id,
-oi.quantity,
-oi.price,
-p.name,
-p.image
-
-FROM order_items oi
-
-LEFT JOIN products p
-ON p.id = oi.product_id
-
-WHERE oi.order_id = ?
-          `,
-          [orderId]
-        );
-
-
-return res.json({
-
-        ...order,
-
-order_items:
-items,
-
-      });
-
-
-    } catch (error) {
-
-console.error(
-        "Get Order Error:",
-error
-      );
-
-
-return res.status(500).json({
-
-success: false,
-
-message:
-          "Failed to fetch order",
-
-      });
-
-    }
-
-  }
-);
-
-
-// =====================================================
-// UPDATE ORDER STATUS
-// PUT /api/orders/:id
-// ADMIN ONLY
-// =====================================================
-
-router.put(
-  "/:id",
-auth,
-async (req, res) => {
-
-try {
-
-      // -----------------------------------------------
-      // ADMIN CHECK
-      // -----------------------------------------------
-
-if (
-Number(req.user?.is_admin) !== 1
-      ) {
-
-return res.status(403).json({
-
-success: false,
-
-message:
-            "Admin access required",
-
-        });
-
-      }
-
-
-const orderId =
-Number(req.params.id);
-
-
-const {
-status
-      } = req.body;
-
-
-      // -----------------------------------------------
-      // STATUS VALIDATION
-      // -----------------------------------------------
-
-if (
-        !ALLOWED_STATUSES.includes(
-status
-        )
-      ) {
-
-return res.status(400).json({
-
-success: false,
-
-message:
-            "Invalid order status",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // UPDATE
-      // -----------------------------------------------
-
-const [result] =
-await db.execute(
-          `
-UPDATE orders
-
-SET status = ?
-
-WHERE id = ?
-          `,
-          [
-status,
-orderId,
-          ]
-        );
-
-
-if (
-result.affectedRows === 0
-      ) {
-
-return res.status(404).json({
-
-success: false,
-
-message:
-            "Order not found",
-
-        });
-
-      }
-
-
-return res.json({
-
+const [orders] = await db.query(
+      "SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC",
+      [req.user.id]
+    );
+
+res.json({
 success: true,
+orders: orders.map((order) => ({
+id: order.id,
+status: order.status,
+total: order.total,
+shipping_method: order.shipping_method,
+payment_method: order.payment_method,
+rating: order.rating ?? null,
+created_at: order.created_at ?? null,
+items: toArray(order.items),
+      })),
+    });
+  } catch (error) {
+sendError(res, error, "Failed to fetch your orders");
+  }
+});
 
-message:
-          "Order status updated",
+router.get("/:id", auth, async (req, res) => {
+try {
+const orderId = parseOrderId(req.params.id);
 
-      });
+const [orders] = await db.query("SELECT * FROM orders WHERE id = ?", [
+orderId,
+    ]);
 
+if (orders.length === 0) throw httpError(404, "Order not found");
 
-    } catch (error) {
+const order = orders[0];
+const isAdmin = Number(req.user?.is_admin) === 1;
+const isOwner = Number(order.user_id) === Number(req.user?.id);
 
-console.error(
-        "Update Order Error:",
-error
-      );
-
-
-return res.status(500).json({
-
-success: false,
-
-message:
-          "Failed to update order",
-
-      });
-
+if (!isAdmin && !isOwner) {
+throw httpError(403, "You are not allowed to view this order");
     }
 
+const [items] = await db.query(
+      `SELECT oi.id, oi.product_id, oi.quantity, oi.price, p.name, p.image
+FROM order_items oi
+LEFT JOIN products p ON p.id = oi.product_id
+WHERE oi.order_id = ?`,
+      [orderId]
+    );
+
+res.json({ ...order, order_items: items });
+  } catch (error) {
+sendError(res, error, "Failed to fetch order");
   }
-);
+});
 
-
-// =====================================================
-// RATE ORDER
-// PUT /api/orders/:id/rating
-// USER / ORDER OWNER
-// =====================================================
-
-router.put(
-  "/:id/rating",
-auth,
-async (req, res) => {
-
+router.put("/:id/rating", auth, async (req, res) => {
 try {
+const orderId = parseOrderId(req.params.id);
+const rating = Number(req.body.rating);
 
-const orderId =
-Number(req.params.id);
+if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+throw httpError(400, "Rating must be between 1 and 5");
+    }
 
+const [orders] = await db.query(
+      "SELECT id, user_id, status FROM orders WHERE id = ?",
+      [orderId]
+    );
 
-const rating =
-Number(req.body.rating);
+if (orders.length === 0) throw httpError(404, "Order not found");
 
+if (Number(orders[0].user_id) !== Number(req.user?.id)) {
+throw httpError(403, "You are not allowed to rate this order");
+    }
 
-      // -----------------------------------------------
-      // RATING VALIDATION
-      // -----------------------------------------------
+if (orders[0].status !== "delivered") {
+throw httpError(400, "Only delivered orders can be rated");
+    }
 
-if (
-        !Number.isInteger(rating) ||
-rating < 1 ||
-rating > 5
-      ) {
-
-return res.status(400).json({
-
-success: false,
-
-message:
-            "Rating must be between 1 and 5",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // GET ORDER OWNER
-      // -----------------------------------------------
-
-const [orders] =
-await db.execute(
-          `
-SELECT
-id,
-user_id,
-status
-
-FROM orders
-
-WHERE id = ?
-          `,
-          [orderId]
-        );
-
-
-if (
-orders.length === 0
-      ) {
-
-return res.status(404).json({
-
-success: false,
-
-message:
-            "Order not found",
-
-        });
-
-      }
-
-
-const order =
-orders[0];
-
-
-      // -----------------------------------------------
-      // ONLY OWNER CAN RATE
-      // -----------------------------------------------
-
-if (
-Number(order.user_id) !==
-Number(req.user?.id)
-      ) {
-
-return res.status(403).json({
-
-success: false,
-
-message:
-            "You are not allowed to rate this order",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // OPTIONAL:
-      // ONLY DELIVERED ORDERS CAN BE RATED
-      // -----------------------------------------------
-
-if (
-order.status !== "delivered"
-      ) {
-
-return res.status(400).json({
-
-success: false,
-
-message:
-            "Only delivered orders can be rated",
-
-        });
-
-      }
-
-
-      // -----------------------------------------------
-      // SAVE RATING
-      // -----------------------------------------------
-
-const [result] =
-await db.execute(
-          `
-UPDATE orders
-
-SET rating = ?
-
-WHERE id = ?
-          `,
-          [
+await db.query("UPDATE orders SET rating = ? WHERE id = ?", [
 rating,
 orderId,
-          ]
-        );
+    ]);
 
+res.json({ success: true, message: "Order rated successfully" });
+  } catch (error) {
+sendError(res, error, "Failed to rate order");
+  }
+});
 
-if (
-result.affectedRows === 0
-      ) {
+router.put("/:id/cancel", auth, async (req, res) => {
+try {
+const orderId = parseOrderId(req.params.id);
 
-return res.status(400).json({
+await changeStatus(orderId, "cancelled", {
+userId: req.user.id,
+isAdmin: false,
+    });
 
-success: false,
+res.json({ success: true, message: "Order cancelled" });
+  } catch (error) {
+sendError(res, error, "Failed to cancel order");
+  }
+});
 
-message:
-            "Rating was not updated",
+router.put("/:id", auth, adminMiddleware, async (req, res) => {
+try {
+const orderId = parseOrderId(req.params.id);
+const status = String(req.body.status || "");
 
-        });
-
-      }
-
-
-return res.json({
-
-success: true,
-
-message:
-          "Order rated successfully",
-
-      });
-
-
-    } catch (error) {
-
-console.error(
-        "Rating Error:",
-error
-      );
-
-
-return res.status(500).json({
-
-success: false,
-
-message:
-          "Failed to rate order",
-
-      });
-
+if (!Object.hasOwn(NEXT_STATUSES, status)) {
+throw httpError(400, "Invalid order status");
     }
 
-  }
-);
+await changeStatus(orderId, status, {
+userId: req.user.id,
+isAdmin: true,
+    });
 
+res.json({ success: true, message: "Order status updated" });
+  } catch (error) {
+sendError(res, error, "Failed to update order");
+  }
+});
 
 module.exports = router;
 

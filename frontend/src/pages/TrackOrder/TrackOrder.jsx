@@ -102,13 +102,7 @@ Loading order...
   // ORDER STATUS
   // =====================================================
 
-const steps = [
-    "Pending",
-    "Accepted",
-    "Processing",
-    "Shipped",
-    "Delivered",
-  ];
+const steps = ["Pending", "Confirmed", "Preparing", "Ready", "Delivered"];
 
   /*
 Handle different possible status formats
@@ -123,18 +117,14 @@ order.status || "Pending"
 
 const statusMap = {
 pending: "Pending",
-
-accepted: "Accepted",
-
-processing: "Processing",
-preparing: "Processing",
-
-shipped: "Shipped",
-    "on the way": "Shipped",
-on_the_way: "Shipped",
-
+confirmed: "Confirmed",
+preparing: "Preparing",
+ready: "Ready",
 delivered: "Delivered",
-  };
+cancelled: "Cancelled",
+};
+
+
 
 const currentStatus =
 statusMap[normalizedStatus] || "Pending";
@@ -338,6 +328,16 @@ ORDER STATUS
           {currentStatus}
 </strong>
 </div>
+
+
+{currentStatus === "Cancelled" && (
+<div className="cancelled-box">
+<h2>This order was cancelled</h2>
+<p>The items went back to stock.</p>
+</div>
+)}
+
+
 
       {/* =================================================
 DELIVERED SUCCESS

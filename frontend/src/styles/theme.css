@@ -1,0 +1,57 @@
+:root {
+  --brand: #243b8f;
+  --brand-text: #243b8f;
+  --accent: #c2185b;
+  --surface: #ffffff;
+  --surface-2: #f3f5fb;
+  --border: #e6e9f2;
+  --text: #202642;
+  --muted: #6f768b;
+  --ok: #219653;
+  --ok-bg: #eaf9f0;
+  --bad: #dc3545;
+  --bad-bg: #fff0f1;
+  --ring: rgba(36, 59, 143, 0.14);
+  --page: transparent;
+  --btn: linear-gradient(135deg, #243b8f, #3858bd);
+  --btn-hover: linear-gradient(135deg, #c2185b, #df3974);
+  --shadow: 0 8px 24px rgba(36, 59, 143, 0.08);
+  --shadow-hover: 0 18px 40px rgba(36, 59, 143, 0.16);
+  --radius: 20px;
+  --nav-bg: rgba(255, 255, 255, 0.82);
+  --nav-solid: #ffffff;
+  --nav-border: rgba(36, 59, 143, 0.1);
+}
+
+body.dark {
+  --brand: #3049a0;
+  --brand-text: #8ca5ff;
+  --accent: #ff6f9c;
+  --surface: #171f2d;
+  --surface-2: #202a3a;
+  --border: #273249;
+  --text: #e7eaf2;
+  --muted: #aeb5c5;
+  --ok: #4ade80;
+  --ok-bg: rgba(34, 197, 94, 0.12);
+  --bad: #ff718c;
+  --bad-bg: rgba(239, 68, 68, 0.12);
+  --ring: rgba(140, 165, 255, 0.2);
+  --page: #0f1721;
+  --btn: linear-gradient(135deg, #3049a0, #4665d0);
+  --btn-hover: linear-gradient(135deg, #c2185b, #e13c77);
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 18px 40px rgba(0, 0, 0, 0.45);
+  --nav-bg: rgba(15, 23, 42, 0.88);
+  --nav-solid: #0f172a;
+  --nav-border: rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+animation-duration: 0.01ms !important;
+transition-duration: 0.01ms !important;
+  }
+}

@@ -1040,3 +1040,25 @@ body.dark .track-loading {
 }
 
 
+.cancelled-box {
+max-width: 520px;
+margin: 30px auto;
+padding: 24px;
+border-radius: 20px;
+background: #ffe4e7;
+color: #c72d42;
+}
+
+.cancelled-box h2 {
+margin: 0 0 6px;
+font-size: 22px;
+}
+
+.cancelled-box p {
+margin: 0;
+}
+
+body.dark .cancelled-box {
+background: rgba(239, 68, 68, 0.12);
+color: #ff718c;
+}

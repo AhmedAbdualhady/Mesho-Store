@@ -2,7 +2,6 @@
 E-COMMERCE ADMIN DASHBOARD
 CLASSIC / PREMIUM
 ===================================================== */
-
 .admin-page {
 
 min-height: 100vh;
@@ -17,7 +16,6 @@ transparent 32%
     );
 
 }
-
 
 /* =====================================================
 MAIN CONTENT
@@ -1468,7 +1466,6 @@ font-size:20px;
 font-size:14px;
   }
 
-
   /* SCROLL BUTTONS */
 
   .scroll-top,
@@ -1583,4 +1580,18 @@ font-size:21px;
 
 }
 
+.order-actions {
+flex-wrap: wrap;
+gap: 10px;
+}
 
+.cancel-action {
+background: #c72d42;
+}
+
+.item-variant {
+display: block;
+color: #8a90a0;
+font-size: 12px;
+font-weight: 600;
+}

@@ -658,16 +658,13 @@ shippingPrices[shippingMethod] ?? 0;
     }
 
 
-    const items =
-      cartItems.map(item => ({
-
-        product_id:
-          Number(item.id),
-
-        quantity:
-          Number(item.quantity),
-
-      }));
+      
+const items = cartItems.map((item) => ({
+product_id: Number(item.id),
+quantity: Number(item.quantity),
+color: item.color || null,
+size: item.size || null,
+}));
 
 
     const invalidItem =
@@ -1713,7 +1710,7 @@ Checkout
               {cartItems.map(item => (
 
 <div
-                  key={item.id}
+                  key={item.cartKey}
                   className="summary-item"
 >
 
@@ -1737,6 +1734,11 @@ Qty:{" "}
     {item.quantity}
 </p>
 </div>
+
+{(item.color || item.size) && (
+<p>{[item.color, item.size].filter(Boolean).join(" • ")}</p>
+)}
+
 
 <span>
   $

@@ -1368,7 +1368,6 @@ linear-gradient(
     );
 }
 
-
 /* =========================================================
 MOBILE DARK MODE
 ========================================================= */
@@ -1395,3 +1394,24 @@ background: #171f31;
 
 }
 
+
+.cart-variants {
+display: flex;
+flex-wrap: wrap;
+gap: 6px;
+margin: 2px 0 8px;
+}
+
+.cart-variant {
+padding: 4px 10px;
+border-radius: 999px;
+background: #f2f4f9;
+color: #243b8f;
+font-size: 12px;
+font-weight: 700;
+}
+
+body.dark .cart-variant {
+background: #222c40;
+color: #b9c8ff;
+}

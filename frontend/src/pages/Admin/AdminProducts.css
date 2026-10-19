@@ -7,12 +7,11 @@ PREMIUM BLUE + PINK THEME
 .admin-products {
 min-height: 100vh;
 
-background:
-radial-gradient(
+background: radial-gradient(
 circle at top right,
-rgba(36,59,143,.08),
+rgba(36, 59, 143, 0.08),
 transparent 32%
-    ),;
+);
 }
 
 
@@ -2086,7 +2085,7 @@ body.dark .modal-content textarea:focus {
 border-color: #8fa2ff;
 
 box-shadow:
-    0 0 0 3pxrgba(143,162,255,.12);
+    0 0 0 3px rgba(143,162,255,.12);
 
 }
 
@@ -2318,7 +2317,7 @@ transform: rotate(14deg);
 
 box-shadow:
     0 12px 30px rgba(23, 37, 84, 0.45),
-    0 0 18pxrgba(37, 99, 235, 0.35);
+    0 0 18px rgba(37, 99, 235, 0.35);
 
 border: 2px solid rgba(255, 255, 255, 0.45);
 
@@ -2408,4 +2407,48 @@ background-color: #0f1721;
 
 body.dark .modal-content input:disabled::placeholder {
 color: #111;
+}
+
+
+.admin-description {
+display: -webkit-box;
+overflow: hidden;
+  -webkit-line-clamp: 2;
+line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.admin-colors {
+display: flex;
+gap: 6px;
+margin: 8px 0 4px;
+}
+
+.admin-colors span {
+width: 16px;
+height: 16px;
+border: 1px solid rgba(0, 0, 0, 0.15);
+border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .product-admin-card {
+width: 100%;
+  }
+
+  .image-box {
+height: 200px;
+  }
+
+  .product-admin-info {
+padding: 16px;
+  }
+
+  .product-admin-top h2 {
+font-size: 18px;
+  }
+
+  .product-admin-info .buttons {
+flex-direction: column;
+  }
 }

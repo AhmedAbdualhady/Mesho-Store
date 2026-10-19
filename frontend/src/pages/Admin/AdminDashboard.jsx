@@ -223,16 +223,21 @@ error
   };
 
 
+const cancelOrder = (id) => {
+if (window.confirm("Cancel this order? Its items will go back to stock.")) {
+updateStatus(id, "cancelled");
+  }
+};
+
+
+  
   // =====================================================
   // STATISTICS
   // =====================================================
 
-const totalSales =
-orders.reduce(
-      (sum, order) =>
-sum + Number(order.total || 0),
-      0
-    );
+const totalSales = orders
+  .filter((order) =>order.status !== "cancelled")
+  .reduce((sum, order) => sum + Number(order.total || 0), 0);
 
 
 const pendingOrders =
@@ -996,8 +1001,14 @@ index
 
 <span>
 
-                                {item.name ||
-                                  "Product"}
+                      
+{item.name || "Product"}
+{(item.color || item.size) && (
+<small className="item-variant">
+    {[item.color, item.size].filter(Boolean).join(" • ")}
+</small>
+)}
+
 
 </span>
 
@@ -1081,12 +1092,20 @@ className="payment-proof"
 
 
 <div className="order-actions">
+  {renderStatusButton(order)}
 
-                      {renderStatusButton(
-order
-                      )}
-
+  {["pending", "confirmed", "preparing", "ready"].includes(order.status)&& (
+<button
+type="button"
+className="admin-action cancel-action"
+onClick={() =>cancelOrder(order.id)}
+>
+<FaTimesCircle />
+Cancel Order
+</button>
+  )}
 </div>
+
 
 
 
