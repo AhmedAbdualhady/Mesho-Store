@@ -1733,11 +1733,12 @@ Checkout
 Qty:{" "}
     {item.quantity}
 </p>
-</div>
 
 {(item.color || item.size) && (
 <p>{[item.color, item.size].filter(Boolean).join(" • ")}</p>
 )}
+
+</div>
 
 
 <span>
@@ -1846,4 +1847,3 @@ Number(item.quantity || 0)
 
 
 export default Checkout;
-
